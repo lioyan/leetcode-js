@@ -20,8 +20,8 @@
  * @return {boolean}
  */
 var canFinish = function(numCourses, prerequisites) {
-  // 根据入度 dfs 队列
-  let inDegree = Array(numCourses).fill(0) // 每个顶点的入度集合，初始入度都为0
+  // 迭代 根据入度 bfs 队列
+  let inDegree = Array(numCourses).fill(0) // 入度表：每个顶点的入度集合，初始入度都为0
   let map = {} // map用来存储顶点的依赖顶点
   for(let i = 0; i < prerequisites.length; i++) {
     inDegree[prerequisites[i][0]]++ // [i][0]即第一个元素的入度+1
@@ -53,3 +53,36 @@ var canFinish = function(numCourses, prerequisites) {
   }
   return res === numCourses
 };
+
+var canFinish = function(numCourses, prerequisites) {
+  // 递归 dfs 判断图中是否有环，有环返回false
+  // 递归顶点，判断当前顶点是否存在环
+  // flag设置顶点三种状态：-1-已搜过，0-未搜索，1-正在搜索
+
+  //let deps = Array(numCourses).fill([]) // 顶点的前置顶点集合，索引为课程号，值为依赖key的课程
+  // 注意！上一行的fill方法填充空数组会报错。因为deps的所有元素会引用同一个空数组
+  let deps = Array.from(Array(numCourses), () => [])
+  let flag = Array(numCourses).fill(0) // 状态集合，索引为课程号，值初始为0：未搜索
+  // 收集邻接条件
+  for(let i = 0; i < prerequisites.length; i++) {
+    let [curr, pre] = prerequisites[i]
+    deps[pre].push(curr)
+  }
+  // 递归函数
+  function dfs(curr, deps, flag) {
+    if(flag[curr] === 1) return false // 1：表示当前路径上该顶点第二次出现，即出现了环，不成立
+    if(flag[curr] === -1) return true // -1：表示该顶点在之前的路径已经判断过了，满足条件，无须重复判断
+    flag[curr] = 1 // 状态置为搜索中
+    for(let i = 0; i < deps[curr].length; i++) {
+      if(!dfs(deps[curr][i], deps, flag)) return false
+    }
+    flag[curr] = -1 // 递归出栈，状态依次置为已搜过
+    return true
+  }
+  for(let i = 0; i < numCourses; i++) {
+    // 只有dfs返回false时，才提前返回
+    // dfs返回true时不能提前返回，因为后续可能有false
+    if(!dfs(i, deps, flag)) return false
+  }
+  return true
+}
